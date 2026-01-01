@@ -28,14 +28,16 @@
 조건문은 특정 조건을 평가하고 그 조건에 따라 다른 코듭 블록을 실행한다.
 
 ## if, 삼항 연산자
-- `if` 문은 조건이 참일 때만 코드 블록을 실행한다.
+- `if`</br>
+    조건이 참일 때만 코드 블록을 실행한다.
     ```csharp
     if (조건)
     {
         // 조건이 참일 때 실행
     }
     ```
-- `if-else` 문은 조건이 참이면 if 블록을, 거짓이면 else 블록을 실행한다.
+- `if-else`</br>
+    조건이 참이면 if 블록을, 거짓이면 else 블록을 실행한다.
     ```csharp
     if (조건)
     {
@@ -46,7 +48,8 @@
         // 조건이 거짓일 때 실행
     }
     ```
-- `else if` 문은 여러 조건을 순차적으로 평가하고, 첫 번째로 참인 조건의 코드 블록을 실행한다.
+- `else if`</br>
+    여러 조건을 순차적으로 평가하고, 첫 번째로 참인 조건의 코드 블록을 실행한다.
     ```csharp
     if (조건1)
     {
@@ -61,13 +64,8 @@
         // 모든 조건이 거짓일 떄 실행
     }
     ```
-- Console.ReadLine()은 사용자의 입력을 받을 수 있다.
-    ```csharp
-    Console.WriteLine("숫자를 입력하세요.");
-    string? input = Console.ReadLine();
-    Console.WriteLine("입력한 숫자는" + input + "입니다.");
-    ```
-- 삼항연산자는 조건문을 간단히 표현할 때 사용된다. (if-else문의 축약형이다.)
+- `삼항연산자`</br>
+    조건문을 간단히 표현할 때 사용된다. (if-else문의 축약형이다.)
     |연산자|설명|예시|
     |--|--|--|
     |?:|조건식이 참이면 참(a)일때의 값을 거짓이면 거짓(b)일때의 값을 반환한다.|int result = (a > b) ? a : b|
@@ -82,9 +80,16 @@
 
     Console.WriteLine(text);
     ```
+- `Console.ReadLine()`</br>
+    사용자의 입력을 받을 수 있다.
+    ```csharp
+    Console.WriteLine("숫자를 입력하세요.");
+    string? input = Console.ReadLine();
+    Console.WriteLine("입력한 숫자는" + input + "입니다.");
+    ```
 
 ## switch
-- `switch` 문은 하나의 변수를 여러 값과 비교하여, 일치하는 경우 해당 코드 블록을 실행한다.
+- switch문은 하나의 변수를 여러 값과 비교하여, 일치하는 경우 해당 코드 블록을 실행한다.
     ```csharp
     switch (표현식)
     {
