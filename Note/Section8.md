@@ -106,3 +106,30 @@
         string trimmedStartMixed = mixedChars.TrimStart('-', '*', '_'); // Hello_*--
         string trimmedEndMixed = mixedChars.TrimEnd('-', '*', '_');     // -*_Hello
         ```
+    - `Split()` : 문자열 분할, 문자열을 특정 구분자로 나누어 배열로 반환
+        ```cs
+        string colors = "Red, Green, Blue";
+        string[] colorArray = colors.Split(',');
+        foreach (string color in colorArray)
+            Console.Write(color + " ");
+        // Red  Green  Blue
+        ```
+    - `Join()` : 무자열 결합, 문자열을 특정 구분자로 결합하여 하나의 문자열로 만들 수 있다.
+        ```cs
+        string colors = "Red, Green, Blue";
+        string[] colorArray = colors.Split(',');
+        string joinedColor = string.Join(" | ", colorArray);
+        Console.WriteLine(joinedColor);
+        // Red |  Green |  Blue
+        ```
+- 이스케이프 시퀀스</br>
+    - `\n` : 줄 바꿈
+    - `\t` : 탭
+    - `\"` : 큰따옴표
+    - `\\` : 백슬래시
+        ```cs
+        string path = "C:\\Users\\John";
+        Console.WriteLine(path);    // C:\Users\John
+        string quote = "He said, \"Hello!\"";
+        Console.WriteLine(quote);   // He said, "Hello!"
+        ```
