@@ -1,28 +1,37 @@
 ﻿
-Point point = new Point { X = 10, Y = 20 };
 
-void ChangePoint(ref Point point)
+Calculate calculate = new Calculate();
+calculate.OnValueChanged += Calculate_OnValueChanged;
+
+void Calculate_OnValueChanged(int result, string message)
 {
-    point.X = 100;
-    point.Y = 200;
-    Console.WriteLine($"함수 내부 : {point}");
+    Console.WriteLine($"{message} - 현재 값 : {result}");
 }
 
-ChangePoint(ref point);
-Console.WriteLine($"함수 외부 : {point}");
-
-// 함수 내부 : X 100, Y : 200
-// 함수 외부 : X 10, Y : 20
+calculate.Plus(5);
+calculate.Plus(3);
+calculate.Minus(2);
+calculate.Minus(10);
 
 Console.ReadKey();
 
-struct Point
-{ 
-    public int X { get; set; }
-    public int Y { get; set; }
+delegate void ValueChangeHandler(int result, string message);
 
-    public override string ToString()
+class Calculate()
+{
+    public event ValueChangeHandler OnValueChanged;
+    private int _value;
+
+    public void Plus(int value)
     {
-        return $"X {X}, Y : {Y}";
+        _value += value;
+        OnValueChanged(_value, $"{value}을 더했습니다.");
+    }
+
+    public void Minus(int value)
+    {
+        _value -= value;
+        OnValueChanged(_value, $"{value}을 뻈습니다.");
     }
 }
+
