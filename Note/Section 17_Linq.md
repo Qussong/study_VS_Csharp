@@ -66,6 +66,7 @@
                     where student.Age >= 21
                     select student;
     ```
+- LINQ 쿼리 변수는 질의 자체를 저장하고 있다가 결과가 실제로 사용될 때 실행된다. 이를 지연실행이라고 하며, 데이터를 여러 번 필터링하거나 정렬할 때 효율적이다.
 
 ## Linq - 쿼리 select
 - LINQ 의 반환값은 select 문의 반환 타입(`T`)에 대한 열거형(`IEnumerable<T>`)이다.
