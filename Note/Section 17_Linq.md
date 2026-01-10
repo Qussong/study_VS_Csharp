@@ -326,10 +326,279 @@
     ```
 
 ## Linq - 메소드 정의
+- LINQ는 컬레션 데이터를 처리하는 기능으로 사용된다.
+- "메서드 체인"을 통해 필터링, 정렬, 그룹화, 투영 등의 작업을 할 수 있다.
+
 ## Linq - 메소드 Select
+- 데이터를 투영하는 메서드
+- 투영이란?
+    1. 데이터의 형식 변경 :</br>
+        컬렉션의 요소를 다른 형식으로 변환 예를 들어, 객체에서 특정 필드만 추출하거나 계산된 값을 반환하는게 이에 해당한다.
+    2. 구조 변경 :</br>
+        복합적인 데이터 구조를 단순화하거나, 필요한 데이터만 선택적으로 포함
+- 기본 예제
+    ```cs
+    var ages = students.Select(student => student.Age);
+
+    foreach (var age in ages)
+        Console.Write(age + " ");
+    // 20 22 23 21 20
+    ```
+- 응용 예제 (익명타입 활용)
+    ```cs
+    // case 1)
+    // 익명타입 활용시 편하긴하지만 외부에서 타입을 알 수 없다.
+    var myStudents = students.Select(student => new { MyName = student.Name, MyAge = student.Age });
+    foreach (var student in myStudents)
+    {
+        Console.WriteLine($"{student.MyName}, {student.MyAge}");
+    }
+
+    // case 2)
+    // ValueTuple 활용시 myStudents2의 타입이 명확해진다.
+    var myStudents2 = students.Select(student => (MyName: student.Name, MyAge: student.Age));
+    foreach (var student in myStudents2)
+    {
+        Console.WriteLine($"{student.MyName}, {student.MyAge}");
+    }
+    ```
+    
 ## Linq - 메소드 SelectMany
+- 중첩 데이터 평탄화하는 메서드
+- 중첩된 컬렉션을 하나의 평면 컬렉션으로 변환한다.
+- 예제 코드
+    ```cs
+    List<Student> students = [
+        new Student { Id = 1, Age = 20, Gender = "F", Scores = [5,3,9], Name = "Alice" },
+        new Student { Id = 2, Age = 22, Gender = "M", Scores = [8,3,2], Name = "Bob" },
+        new Student { Id = 3, Age = 23, Gender = "M", Scores = [4,4,1], Name = "Charlie" },
+        new Student { Id = 4, Age = 21, Gender = "M", Scores = [5,6,2], Name = "David" },
+        new Student { Id = 5, Age = 20, Gender = "F", Scores = [9,8,7], Name = "Eve" },
+    ];
+
+    // scores 의 타입 : IEnumerable<List<int>>
+    var scores = students.Select(student => student.Scores);
+    // scores2 의 타입 : IEnumerable<int>
+    var scores2 = students.SelectMany(student => student.Scores);
+    /*
+        scores = [
+                [5, 3, 9]
+                [8, 3, 2]
+                [4, 4, 1]
+                [5, 6, 2]
+                [9, 8, 7]
+                ]
+
+        scores2 -> [5, 3, 9,8, 3, 2,4, 4, 1,5, 6, 2, 9, 8, 7]
+    */
+    ```
+
 ## Linq - 메소드 Where
+- 특정 조건을 만족하는 요소로 필터링하는 메서드
+- 예제 코드
+    ```cs
+    List<Student> students = [
+        new Student { Id = 1, Age = 20, Gender = "F", Scores = [5,3,9], Name = "Alice" },
+        new Student { Id = 2, Age = 22, Gender = "M", Scores = [8,3,2], Name = "Bob" },
+        new Student { Id = 3, Age = 23, Gender = "M", Scores = [4,4,1], Name = "Charlie" },
+        new Student { Id = 4, Age = 21, Gender = "M", Scores = [5,6,2], Name = "David" },
+        new Student { Id = 5, Age = 20, Gender = "F", Scores = [9,8,7], Name = "Eve" },
+    ];
+
+    var result = students.Where(student => student.Name.EndsWith("e"));
+    foreach (var student in result)
+    {
+        Console.Write(student.Name + " ");
+    }
+    // Alice Charlie Eve
+    ```
+
 ## Linq - 메소드 OrderBy, 메서드 체이닝
+- 데이터 정렬하는 메서드
+- 메서드 뒤에 또 다른 메서드를 호출하는것을 "메서드 체이닝"이라고 하며 이를 활용할 수 있다.
+- 예제 코드
+    ```cs
+    var result = students.Where(student => student.Name.EndsWith("e"))
+                        .OrderBy(student => student.Age);
+    foreach (Student student in result)
+    {
+        Console.WriteLine(student);
+    }
+    /*
+        Id: 1, Name: Alice, Age: 20
+        Id: 5, Name: Eve, Age: 20
+        Id: 3, Name: Charlie, Age: 23
+    */
+    ```
+- 꼭 메서드 체이닝이 아니더라도 사용할 수 있다. 또한 `OrderByDescending()`을 통해 역순으로 정렬할 수 있다.
+    ```cs
+    var result = students
+                .OrderByDescending(student => student.Age);
+    foreach (Student student in result)
+    {
+        Console.WriteLine(student);
+    }
+    /*
+        Id : 3, Name : Charlie, Age : 23
+        Id : 2, Name : Bob, Age : 22
+        Id : 4, Name : David, Age : 21
+        Id : 1, Name : Alice, Age : 20
+        Id : 5, Name : Eve, Age : 20
+    */
+    ```
+- 추가적인 정렬 조건은 `TheBy()`, `ThenByDescending()`을 통해 추가할 수 있다.
+    ```cs
+    var result = students
+                .OrderByDescending(student => student.Age)
+                .ThenByDescending(student => student.Name);
+    foreach (Student student in result)
+    {
+        Console.WriteLine(student);
+    }
+    /*
+        Id : 3, Name : Charlie, Age : 23
+        Id : 2, Name : Bob, Age : 22
+        Id : 4, Name : David, Age : 21
+        Id : 5, Name : Eve, Age : 20
+        Id : 1, Name : Alice, Age : 20
+    */
+    ```
+
 ## Linq - 메소드 GroupBy
+- 데이터를 그룹화하는 메서드
+- 그룹핑된 각 그룹에는 Key Value 가 존재한다.
+- 예제 코드
+    ```cs
+    var result = students
+                .GroupBy(Student => Student.Gender);
+    foreach(var genderGroup in result)
+    {
+        Console.Write($"{genderGroup.Key} : ");
+        foreach(var student in genderGroup)
+        {
+            Console.Write(student.Name + " ");
+        }
+        Console.WriteLine();
+    }
+    /*
+        F: Alice Eve
+        M: Bob Charlie David
+    */
+    ```
+- 출력순서를 조정하고 싶다면 메서드 체이닝을 통해 OrderBy 를 활용하면 된다.
+    ```cs
+    var result = students
+                .GroupBy(Student => Student.Gender)
+                .OrderByDescending(g => g.Key);
+    foreach(var genderGroup in result)
+    {
+        Console.Write($"{genderGroup.Key} : ");
+        foreach(var student in genderGroup)
+        {
+            Console.Write(student.Name + " ");
+        }
+        Console.WriteLine();
+    }
+    /*
+        M : Bob Charlie David
+        F : Alice Eve
+    */
+    ```
+
 ## Linq - 쿼리 join
+- Join 문은 두 개 이상의 컬렉션을 특정 키(기준 값)를 기준으로 결합할 때 사용하는 LINQ 구문이다.
+- Joint 문을 사용하면 두 리스트나 컬렉션에 포함된 데이터를 연결하여 새로운 결과를 생성할 수 있다.
+- 예제 코드
+    ```cs
+    List<Student> students = [
+        new Student { Id = 1, Age = 20, Gender = "F", Name = "Alice" },
+        new Student { Id = 2, Age = 22, Gender = "M", Name = "Bob" },
+        new Student { Id = 3, Age = 23, Gender = "M", Name = "Charlie" },
+        new Student { Id = 4, Age = 21, Gender = "M", Name = "David" },
+        new Student { Id = 5, Age = 20, Gender = "F", Name = "Eve" },
+    ];
+
+    List<Score> studentScores = [
+        new Score { StudentId = 1, ScoreValue = 5, Subject = "Math" },
+        new Score { StudentId = 1, ScoreValue = 3, Subject = "Science" },
+        new Score { StudentId = 1, ScoreValue = 9, Subject = "History" },
+        new Score { StudentId = 2, ScoreValue = 8, Subject = "Math" },
+        new Score { StudentId = 2, ScoreValue = 3, Subject = "Science" },
+        new Score { StudentId = 2, ScoreValue = 2, Subject = "History" },
+        new Score { StudentId = 3, ScoreValue = 4, Subject = "Math" },
+        new Score { StudentId = 3, ScoreValue = 4, Subject = "Science" },
+        new Score { StudentId = 3, ScoreValue = 1, Subject = "History" },
+        new Score { StudentId = 4, ScoreValue = 5, Subject = "Math" },
+        new Score { StudentId = 4, ScoreValue = 6, Subject = "Science" },
+        new Score { StudentId = 4, ScoreValue = 2, Subject = "History" },
+        new Score { StudentId = 5, ScoreValue = 9, Subject = "Math" },
+        new Score { StudentId = 5, ScoreValue = 8, Subject = "Science" },
+        new Score { StudentId = 5, ScoreValue = 7, Subject = "History" },
+    ];
+
+    var result = from student in students
+                join score in studentScores
+                on student.Id equals score.StudentId   // join 완성
+                select (student, score);
+
+    // ValueTuple의 경우 요소를 분해해서 꺼낼 수 있다.
+    foreach (var (student, score) in result)
+    {
+        Console.WriteLine(
+            $"Student : {student.Name}, " +
+            $"Subject : {score.Subject}, " +
+            $"Score : {score.ScoreValue}");
+    }
+
+    /*
+        Student: Alice, Subject: Math, Score: 5
+        Student: Alice, Subject: Science, Score: 3
+        Student: Alice, Subject: History, Score: 9
+        Student: Bob, Subject: Math, Score: 8
+        Student: Bob, Subject: Science, Score: 3
+        Student: Bob, Subject: History, Score: 2
+        Student: Charlie, Subject: Math, Score: 4
+        Student: Charlie, Subject: Science, Score: 4
+        Student: Charlie, Subject: History, Score: 1
+        Student: David, Subject: Math, Score: 5
+        Student: David, Subject: Science, Score: 6
+        Student: David, Subject: History, Score: 2
+        Student: Eve, Subject: Math, Score: 9
+        Student: Eve, Subject: Science, Score: 8
+        Student: Eve, Subject: History, Score: 7
+    */
+
+    class Student
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
+        public string Gender { get; set; } = "";
+        public override string ToString()
+        {
+            return $"Id: {Id}, Name: {Name}, Age: {Age}";
+        }
+    }
+
+    class Score
+    {
+        public int StudentId { get; set; }  // Student 의 Id 와 밀접한 관련이 있다.
+        public int ScoreValue { get; set; }
+        public string Subject { get; set; } = "";
+    }
+    ```
+
 ## Linq - 메서드 join
+- 위의 쿼리 구문을 메서드로 표현해보자
+    ```cs
+    var result = students.Join(
+            studentScores,                          // Join 대상의 컬렉션
+            student => student.Id,                  // Key
+            score => score.StudentId,               // Join 대상의 Key
+            (student, score) => (student, score)    // 반환 타입 (첫번째 컬렉션의 요소, 두번째 컬렉션의 요소)
+        );
+    ```
+
+## Linq 참고 사이트
+- Linq 에는 수많은 함수가 있기에 이를 다 알 수 없다.
+- 참고 사이트 : [MSDN - C#의 LINQ 쿼리 소개 URL](https://learn.microsoft.com/ko-kr/dotnet/csharp/linq/get-started/introduction-to-linq-queries)
