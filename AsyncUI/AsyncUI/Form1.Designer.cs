@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             btnAsync = new Button();
+            lbLog = new ListBox();
             SuspendLayout();
             // 
             // btnAsync
@@ -41,11 +42,22 @@
             btnAsync.UseVisualStyleBackColor = true;
             btnAsync.Click += btnAsync_Click;
             // 
+            // lbLog
+            // 
+            lbLog.FormattingEnabled = true;
+            lbLog.ItemHeight = 15;
+            lbLog.Location = new Point(161, 22);
+            lbLog.Name = "lbLog";
+            lbLog.Size = new Size(291, 334);
+            lbLog.TabIndex = 1;
+            lbLog.SelectedIndexChanged += listBox1_SelectedIndexChanged;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(lbLog);
             Controls.Add(btnAsync);
             Name = "Form1";
             Text = "Form1";
@@ -55,5 +67,6 @@
         #endregion
 
         private Button btnAsync;
+        private ListBox lbLog;
     }
 }

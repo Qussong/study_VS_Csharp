@@ -108,6 +108,49 @@
 - 흐름 예시
     ![UI가 없는 환경에서의 흐름](./_img/20_진행%20흐름_UI가%20없는%20환경.png)
 
+### Synchronization 이란?
+- 동기화(Synchronization)의 가장 일반적인 의미는 여러 실행 흐름(스레드/작업)의 실행 순서, 시점, 접근을 맞추는 것을 뜻한다.
+- 즉, 동시에 실행되는 것들 사이의 충돌, 순서 꼬임, 경쟁 상태(Race Condition)을 방지하기 위한 개념이다.
+- 대표적인 Synchronization의 예
+    |대상|목적|
+    |---|---|
+    |`lock`,`Monitor`|동시에 접근하지 못하게|
+    |`Mutex`,`Semaphore`|접근 개수 제어|
+    |`Interlocked`|원자적 연산|
+    |`volatile`|메모리 가시성|
+    ☝️ 이건 전부 데이터 보호 중심이다.
+- .NET의 SynchronizationContext에서의 Synchronization은 조금 다른의미를 가진다. → "코드를 어디에서 실행하나?"
+- 데이터가 아니라 실행 컨텍스트(스레드/큐/루프)를 맞추는 개념
+- 즉, 해당 작업이 반드시 실행되어야하는 특정 환경으로 보내(post)주는 역할을 한다.
+
+### UI Synchronization은 무엇인가?
+- UI는 단일 스레드 모델을 사용하기에 모든 UI 접근을 "UI 스레드"라는 하나의 실행 컨텍스트로 동기화해야 한다.
+- 이 때문에 생겨난것이 WinForm의 "WindowsFormsSynchronizationContext", WPF의 "DisptcherSynchronizationContext"다.
+- UI Synchronization이 필요한 이유 :
+    - UI 컨트롤은 Thread-Safe하지 않다.
+    - 내부 상태가 매우 복잡함
+    - 다중 스레드 접근 시 깨짐
+- 이러한 이유로 UI 작업은 항상 UI 스레드에서 실행하라는 규칙을 강제한다.
+
+### 일반 Synchronization vs UI Synchronization 비교
+|구분|일반 Synchronization|UI Synchronization|
+|---|---|---|
+|대상|데이터/자원|실행 위치|
+|목적|경쟁 상태 방지|UI 스레드 강제|
+|방식|lock,Mutex 등|Context Post|
+|스레드 차단|⭕|❌|
+|논블로킹|보장 못함|⭕|
+- 일반 콘솔/ASP.NET의 동기화와 WinFrom의 동기화는 같은 단어를 사용하지만 의미가 다르다.
+- 또한, Synchronization은 UI에만 있는 개념은 아니며, WinForm에서는 UI 전용 구현체(WindowsFormsSynchronizationContext)로 사용된다.
+- SynchronizationContext는 비동기 후속 코드를 어디서 실행할지 결정하는 추상 개념이다.
+    |환경|SynchronizationContext|
+    |---|---|
+    |WinForm|WindowsFormsSynchronizationContext|
+    |WPF|DispatcherSynchronizationContext|
+    |ASP.NET (구버전)|AspNetSynchronizationContext|
+    |Console / ASP.NET Core|❌ (없음, null)|
+    ☝️ 실제 구현 예
+
 ## 비동기 (WinForm UI 생성)
 - UI가 있는 환경을 위해 프로젝트를 새로 만들어준다.
     ```
@@ -122,7 +165,115 @@
     ![WinForm 프로젝트 페이지](./_img/20_WinForm%20UI%20생성_WInForm%20프로젝트.png)
 
 ## 비동기 (진행 흐름 - UI가 있는 환경)
+- 예제 코드
+    ```cs
+    using System.Diagnostics;
+
+    namespace AsyncUI
+    {
+        public partial class Form1 : Form
+        {
+            public Form1()
+            {
+                InitializeComponent();
+            }
+
+            // 1. 버튼 클릭 이벤트 발생 → UI 스레드에서 btnAsync_Click 실행
+            private async void btnAsync_Click(object sender, EventArgs e)
+            {
+                // 2. TaskAsync1() 호출
+                // → await 이전 코드까지는 즉시 UI 스레드에서 실행
+                // → 첫 await에서 비동기 작업 등록 후 제어 반환
+                Task task1 = TaskAsync1();
+                // 4. TaskAsync2() 호출 (동일한 흐름)
+                Task task2 = TaskAsync2();
+
+                // 6. 이미 실행 중인 두 Task의 완료를 논블로킹으로 대기
+                // → 스레드를 점유하지 않음
+                // → await 시 UI SynchronizationContext 캡처
+                await Task.WhenAll(task1, task2);
+
+                // 7. 두 Task 완료 후 continuation 실행
+                // → 캡처된 WindowsFormsSynchronizationContext를 통해
+                //   UI 스레드에서 실행된 뒤 메서드 종료
+            }
+
+            async Task TaskAsync1()
+            {
+                Debug.Print("TaskAsync1 Started");
+                // 3. 타이머 기반 비동기 작업 등록
+                // → UI 스레드 차단 없이 반환
+                // → 완료 시 continuation을 UI SynchronizationContext에 Post
+                await Task.Delay(3000);
+                Debug.Print("TaskAsync1 Finished");
+            }
+
+            async Task TaskAsync2()
+            {
+                Debug.Print("TaskAsync2 Started");
+                // 5. 타이머 등록 후 UI 스레드 반환
+                await Task.Delay(1500);
+                Debug.Print("TaskAsync1 Finished");
+            }
+        }
+    }
+    ```
+    - await 를 만나게되면 현재 실행 중이던 메서드의 나머지 실행을 중단하고, UI 스레드를 WinForm 메세지 루프에게 다시 넘긴다.
+    - "두 Task 완료 후 continuation 실행" == `await Task.WhenAll(task1, task2)` 이 줄 다음에 있는 코드를 두 Task가 모두 완료된 후에 실행한다
+    - "완료 시 continuation을 UI SynchronizationContext에 Post" == 해당 continuation을 이 컨텍스트가 관리하는 실행 환경에서 실행해 달라
+    - "Post" 라는 표현을 사용하는 이유는 UI 에서는 절대 UI 스레드를 즉시 점유하지 않기때문이다.
+        - Send : 즉시 실행 (동기)
+        - Post : 큐에 넣고 나중에 실행 (비동기)
+    - WinForm 에서는 async/await가 메인 스레드로 돌아온다. → WinForm의 SynchronizationContext 때문
+    - WinForm 앱이 시작되면 UI 스레드 전용 WindowsFormsSynchronizationContext가 설정되며, await를 만나면 현재 SynchronizationContex를 캡쳐한다.
+- WinForm에서 비동기 코드가 동일한 메인 스레드에서 동작하는 것처럼 보이는 이유는 await가 현재 SynchronizationContext(UI 스레드)를 캡쳐하고, 비동기 작업 완료 후 그 컨텍스트를 통해 다시 UI 스레드에서 continuation을 실행하기 때문이다.
+
+### continuation 이란?
+- continuation은 await 이후에 실행되어야 할 "나머지 코드"를 의미한다.
+- await 이후의 코드는 현재 실행되지 않고 "나중에 실행할 코드"로 등록된다.
+- "나중에 실행할 코드 묶음"이 바로 continuation 이다.
+
+### "비동기 == 멀티스레드"는 아니다.
+```cs
+async void Button_Click(...)
+{
+    await Task.Delay(1000);
+    label1.Text = "완료";
+}
+```
+- 타이머 기반 비동기는 스레드를 점유하지 않음
+- 완료 후 UI SynchronizationContext로 복귀
+- 때문에 모든 코드가 같은 스레드에서 도는 것처럼 보임
+- 다만 WinForm UI 프로그램이 항상 같은 스레드만 사용하는 것은 아니며, `Task.Delay` 같은 타이머 기반 비동기는 스레드를 사용하지 않기 때문에 위의 모든 코드가 같은 UI 스레드에서 실행되는 것처럼 보이는 것이다.
+
 ## 비동기 (Context Switching)
+- UI에 보여지는 작업은 반드시 주 스레드에서 실행이 되어야한다.
+- 만약 주 스레드가 아니라 다른 스레드에서 실행이 되면 Cross Thread Error가 발생한다.
+- 예제 코드
+    ```cs
+    // TaskAsync1 을 수정
+    async Task TaskAsync1()
+    {
+        lbLog.Items.Add("TaskAsync1 Started");
+        await Task.Delay(3000).ConfigureAwait(false);   // ContextSwitching 사용x
+        lbLog.Items.Add("TaskAsync1 Finished");
+    }
+    ```
+    - `ConfigureAwait()` : 기본값은 true로 현재 Synchronization을 캡쳐하여 비동기 작업 완료 후 같은 컨텍스트에서 continuation을 실행하도록한다.
+    - false 로 설정하면 SynchronizationContext를 캡처하지 않고 UI 스레드로 복귀하지 않게된다.
+    - false의 의미 : "이 await 이후의 continuation은 현재 SynchronizationContextUI로 돌아오지 말고, 아무 ThreadPool 스레드에서나 실행해도 된다."
+    - 에러 메세지
+        ```
+        System.InvalidOperationException: '크로스 스레드 작업이 잘못되었습니다. 'lbLog' 컨트롤이 자신이 만들어진 스레드가 아닌 스레드에서 액세스되었습니다.'
+        ```
+- UI는 단일 스레드 모델이기 때문에 UI 접근은 반드시 UI 스레드에서만 가능하다. 때문에 SynchronizationContext가 continuation을 UI 스레드의 메세지 큐에 Post 한다.
+- UI 스레드에서 실행하도록 예약된 continuation이 처리되는 과정에서, OS 스케줄링에 따라 스레드 전환(Context Switching)이 발생할 수 있다.
+- Context Switching은 continuation을 UI 스레드에서 실행하기 위한 ‘목적’이 아니라, 그 실행을 OS가 스케줄링하는 과정에서 ‘부수적으로 발생할 수 있는 결과’다.
+
+### SynchronizationContext 캡처의 의미
+- SynchronizationContext를 캡처한다는 것은 await 시점의 이후 코드를 어디서 실행할지를 저장해둔다는 의미이다.
+- 따라서 캡처하지 않는다는 것은 이후 코드를 굳이 원래 환경으로 돌려보내지 않겠다는 의미가된다.
+
 ## 비동기와 동기의 차이 : Non-Blocking
 ## 비동기 (반환 타입 Task, WhenAll)
 ## 비동기 (deadlock 원인 및 해결방안)
