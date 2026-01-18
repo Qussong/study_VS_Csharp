@@ -31,18 +31,27 @@
 
 ## CustomAttribute 동작 제어
 - 간단메모 :
-    - AllowMultiple = true : 기본값 false, 동일한 Attribute 를 여러번 사용할 수 있도록 해준다.
+    - AllowMultiple = true : 기본값 false, 동일한 Attribute 를 중복하여 사용할 수 있도록 해준다.
     - Inherited = true : 기본값 true, 크래스 상속시 Attribute도 같이 상속할지 설정한다.
 
 ## CustomAttribute 활용 예제 (메타 정보 읽어오기)
 - 간단메모 :
-    - 
+    - Type.GetCustomAttribute()
+    - Assembly.GetExecutingAssemnly().GetTypes()
+    - String.CompareTo()
+
 ## CustomAttribute 실전 활용 예제 (Property)
 - 간단메모 :
-    - 
+    - 예제코드 난이도가 높았다... 무조건 따라 작성하고 응용해봐야함
+
 ## AOP (Aspect-Oriented Programming) 구현
 - 간단메모 :
-    - 
+    - 관점 지향 프로그래밍(AOP)
+    - 횡단 관심사 (cross-cutting concerns) : 여러 모듈이나 계층에 걸쳐 반복적으로 나타나는 "공통 기능"
+    - 횡단 관심사를 모듈화하여 코드의 재사용성, 가독성, 유지보수성을 높이는 프로그래밍 패러다임
+    - NuGet 패키지 관리자 -> "Castle.Core" 검색 -> 설치
+    - IInterceptor 인터페이스
+
 ## CustomAttribute 실전 활용 예제 (Parameter)
 - 간단메모 :
-    - 
+    - 예제코드 난이도가 높았다... 무조건 따라 작성하고 응용해봐야함
